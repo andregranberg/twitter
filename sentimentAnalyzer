@@ -3,17 +3,19 @@ nltk.download('vader_lexicon')
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 sid = SentimentIntensityAnalyzer()
 
-# Navigate to where your data is stored
-
 import pandas as pd
 df = pd.read_csv('data.csv')
 
-positive = 0
-neutral = 0
-negative = 0
+# Create three columns for each value, with a placeholder 'null' value
+df['Positive'] = 'null'
+df['Neutral'] = 'null'
+df['Negative'] = 'null'
+
+k = 0
 
 for x in df['tweet']:
     y = sid.polarity_scores(x)
-    positive = positive + y['pos']
-    negative = negative + y['neg']
-    neutral = neutral + y['neu']
+    df.loc[k, 'Positive'] = y['pos']
+    df.loc[k, 'Negative'] = y['neg']
+    df.loc[k, 'Neutral'] = y['neu']
+    k = k + 1
