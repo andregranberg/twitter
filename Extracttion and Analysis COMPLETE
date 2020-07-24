@@ -1,0 +1,63 @@
+# This is the API for the web scraper that extracts Twitter data
+import twint
+
+# This gets rid of the error message that would otherwise have appeared when running 'twint.run.Search(c)''
+import nest_asyncio
+nest_asyncio.apply()
+
+# Pandas is used to transform extracted data
+import pandas as pd
+
+# Navigate to a folder where you want to store a CSV file that will contain all the tweets (and other twitter data) that you will extract
+
+# Generate dates
+from datetime import datetime
+
+dateRange = pd.date_range(start="2020-07-01",end="2020-07-22")
+
+dates = []
+
+for x in dateRange:
+    date = str(x)[:10]
+    fullDate = date + ' 12:00:00'
+    dates.append(fullDate)
+
+# You have the dates now. The script bellow will extract tweets for any given keyword, set the limit per day at c.Limit
+
+k = 0
+c = twint.Config()
+
+for x in dates:
+    date = dates[k]
+    k = k + 1
+    c.Until = date
+    c.Search = "happy"
+    c.Limit = 1
+    #c.Timedelta = 1          
+    c.Store_csv = True
+    c.Custom_csv = ["id", "user_id", "username", "tweet", "mentions", "hashtags", "replies_count", "retweets_count", "likes_count"]
+    c.Output = "data.csv"
+    c.Hide_output = True
+    twint.run.Search(c)
+
+# If everything worked correctly, the dataframe should contain the twitter data that you have extracted
+df = pd.read_csv("data.csv")
+
+import nltk
+nltk.download('vader_lexicon')
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
+sid = SentimentIntensityAnalyzer()
+
+# Create three columns for each value, with a placeholder 'null' value
+df['Positive'] = 'null'
+df['Neutral'] = 'null'
+df['Negative'] = 'null'
+
+k = 0
+
+for x in df['tweet']:
+    y = sid.polarity_scores(x)
+    df.loc[k, 'Positive'] = y['pos']
+    df.loc[k, 'Negative'] = y['neg']
+    df.loc[k, 'Neutral'] = y['neu']
+    k = k + 1
